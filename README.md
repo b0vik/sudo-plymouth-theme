@@ -1,6 +1,9 @@
 ## sudo-plymouth-theme
 plymouth theme based off of the sudo mascot, as shown [here](https://wetdry.world/@max/111910989627736429)  
 
+## disclaimer
+the code is awful
+
 ## installing
 copy contents of repo to /usr/share/plymouth/themes/sudo, then run
 ```shell
