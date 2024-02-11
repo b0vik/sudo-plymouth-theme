@@ -1,7 +1,7 @@
 [Plymouth Theme]
 Name=sudo
 Description=sudo mascot theme with tim sweeney cameo
-ModuleName=sudo
+ModuleName=script
 
 [script]
 ImageDir=/usr/share/plymouth/themes//sudo
