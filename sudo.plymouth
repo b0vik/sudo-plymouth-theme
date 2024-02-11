@@ -6,6 +6,3 @@ ModuleName=sudo
 [script]
 ImageDir=/usr/share/plymouth/themes//sudo
 ScriptFile=/usr/share/plymouth/themes//sudo/sudo.script
-
-[script-env-vars]
-example_env_var=example env var value
