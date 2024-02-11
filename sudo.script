@@ -1,0 +1,188 @@
+# This is an example plymouth plugin script
+
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+logo.image = Image("sudo-notext.png");
+sudo_image = Image("sudo.png");
+sweeney.image = Image("sweeney-big.png");
+sweeney.sprite = Sprite(sweeney.image);
+sweeney.sprite.SetOpacity(0);
+sweeney.sprite.SetZ(9999);
+logo.sprite = Sprite(logo.image);
+logo.opacity_angle = 0;
+logo.current_rotation = 0;
+logo.current_scale = 0.025;
+logo.rotation_speed = (2 * 3.14) / 10;
+logo.old_width = logo.image.GetWidth();
+logo.old_height = logo.image.GetHeight();
+sweeney.progression = -800;
+sweeney.has_begun = 0;
+show_sudo = 0;
+
+
+fun refresh_callback ()
+  {
+    if (status == "normal")
+      {
+        logo.current_rotation += logo.rotation_speed;
+        if (show_sudo) {
+          temp_logo_image = sudo_image.Rotate(logo.current_rotation).Scale(logo.old_width * logo.current_scale, logo.old_height * logo.current_scale);
+        } else {
+          temp_logo_image = logo.image.Rotate(logo.current_rotation).Scale(logo.old_width * logo.current_scale, logo.old_height * logo.current_scale);
+        }
+        // temp_logo_image = logo.image.Rotate(logo.current_rotation).Scale(logo.old_width * logo.current_scale, logo.old_height * logo.current_scale);
+        logo.sprite.SetImage(temp_logo_image);
+        if (logo.current_scale < 1.00) {
+          logo.current_scale += 0.025;
+        } else {
+          logo.rotation_speed = 0;
+          sweeney.progression += (Window.GetWidth() / 10);
+          sweeney.has_begun = 1;
+          sweeney.sprite.SetOpacity(1);
+          sweeney.temp_image = sweeney.image.Rotate((sweeney.progression / Window.GetWidth()) * 3.14);
+          sweeney.sprite.SetImage(sweeney.temp_image);
+        }
+        if (sweeney.progression >= (Window.GetWidth() / 2 - sweeney.image.GetWidth() / 2)) {
+          show_sudo = 1;
+
+        }
+
+        logo.opacity_angle += ((2 * 3.14) / 50) * 0.5;  # 0.5 HZ
+        // logo.current_rotation +=
+        min_opacity = 0.3;
+        opacity = (Math.Cos(logo.opacity_angle) + 1) / 2;
+        opacity *= 1 - min_opacity;
+        opacity += min_opacity;
+        logo.sprite.SetX (Window.GetX() + Window.GetWidth()  * 0.5 - temp_logo_image.GetWidth()  / 2);
+        logo.sprite.SetY (Window.GetY() + Window.GetHeight() * 0.4 - temp_logo_image.GetHeight() / 2);
+        sweeney.sprite.SetY(Window.GetY() + Window.GetHeight() * 0.4 - sweeney.temp_image.GetHeight() / 2 + 300);
+        sweeney.sprite.SetX (sweeney.progression);
+
+
+        logo.sprite.SetOpacity (1);
+
+
+      }
+    else
+      {
+        logo.sprite.SetX (0);
+        logo.sprite.SetY (0);
+        logo.sprite.SetOpacity (1);
+      }
+  }
+  
+Plymouth.SetRefreshFunction (refresh_callback);
+
+#----------------------------------------- Dialogue --------------------------------
+
+status = "normal";
+
+fun dialog_setup()
+  {
+    local.box;
+    local.lock;
+    local.entry;
+    
+    box.image = Image("box.png");
+    lock.image = Image("lock.png");
+    entry.image = Image("entry.png");
+    
+    box.sprite = Sprite(box.image);
+    box.x = Window.GetX() + Window.GetWidth()  / 2 - box.image.GetWidth ()/2;
+    box.y = Window.GetY() + Window.GetHeight() / 2 - box.image.GetHeight()/2;
+    box.z = 10000;
+    box.sprite.SetPosition(box.x, box.y, box.z);
+    
+    lock.sprite = Sprite(lock.image);
+    lock.x = box.x + box.image.GetWidth()/2 - (lock.image.GetWidth() + entry.image.GetWidth()) / 2;
+    lock.y = box.y + box.image.GetHeight()/2 - lock.image.GetHeight()/2;
+    lock.z = box.z + 1;
+    lock.sprite.SetPosition(lock.x, lock.y, lock.z);
+    
+    entry.sprite = Sprite(entry.image);
+    entry.x = lock.x + lock.image.GetWidth();
+    entry.y = box.y + box.image.GetHeight()/2 - entry.image.GetHeight()/2;
+    entry.z = box.z + 1;
+    entry.sprite.SetPosition(entry.x, entry.y, entry.z);
+    
+    global.dialog.box = box;
+    global.dialog.lock = lock;
+    global.dialog.entry = entry;
+    global.dialog.bullet_image = Image("bullet.png");
+    dialog_opacity (1);
+  }
+    
+fun dialog_opacity(opacity)
+  {
+    dialog.box.sprite.SetOpacity (opacity);
+    dialog.lock.sprite.SetOpacity (opacity);
+    dialog.entry.sprite.SetOpacity (opacity);
+    for (index = 0; dialog.bullet[index]; index++)
+      {
+        dialog.bullet[index].sprite.SetOpacity(opacity);
+      }
+  }
+
+fun display_normal_callback ()
+  {
+    global.status = "normal";
+    if (global.dialog)
+      dialog_opacity (0);
+  }
+
+fun display_password_callback (prompt, bullets)
+  {
+    global.status = "password";
+    if (!global.dialog)
+	dialog_setup();
+    else
+	dialog_opacity(1);
+    for (index = 0; dialog.bullet[index] || index < bullets; index++)
+      {
+        if (!dialog.bullet[index])
+          {
+            dialog.bullet[index].sprite = Sprite(dialog.bullet_image);
+            dialog.bullet[index].x = dialog.entry.x + index * dialog.bullet_image.GetWidth();
+            dialog.bullet[index].y = dialog.entry.y + dialog.entry.image.GetHeight() / 2 - dialog.bullet_image.GetHeight() / 2;
+            dialog.bullet[index].z = dialog.entry.z + 1;
+            dialog.bullet[index].sprite.SetPosition(dialog.bullet[index].x, dialog.bullet[index].y, dialog.bullet[index].z);
+          }
+        if (index < bullets)
+          dialog.bullet[index].sprite.SetOpacity(1);
+        else
+          dialog.bullet[index].sprite.SetOpacity(0);
+      }
+  }
+
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+
+#----------------------------------------- Quit --------------------------------
+
+fun quit_callback ()
+{
+  logo.sprite.SetOpacity (1);
+}
+
+Plymouth.SetQuitFunction(quit_callback);
+
+#----------------------------------------- Message --------------------------------
+
+message_sprite = Sprite();
+message_sprite.SetPosition(10, 10, 10000);
+
+fun display_message_callback (text)
+{
+  my_image = Image.Text(text, 1, 1, 1);
+  message_sprite.SetImage(my_image);
+}
+
+fun hide_message_callback (text)
+{
+  message_sprite = Sprite();
+  message_sprite.SetPosition(10, 10, 10000);
+}
+
+Plymouth.SetDisplayMessageFunction (display_message_callback);
+Plymouth.SetHideMessageFunction (hide_message_callback);
